@@ -596,12 +596,266 @@
       <to>Unique rows</to>
       <enabled>Y</enabled>
     </hop>
+    <hop>
+      <from>Unique rows</from>
+      <to>Filter rows</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Sort rows 3</from>
+      <to>Merge join</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Read Rental from Sakila</from>
+      <to>Sort rows 2</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Sort rows 2</from>
+      <to>Merge join</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Filter rows</from>
+      <to>Add sequence</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Add sequence</from>
+      <to>Write date in DWSakila</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Add sequence</from>
+      <to>Sort rows 3</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Merge join</from>
+      <to>Select values</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Sort rows 3</from>
+      <to>Merge join 2</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Merge join 2</from>
+      <to>Select values 2</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Sort rows 3</from>
+      <to>Merge join 3</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Select values</from>
+      <to>Sort rows 4</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Sort rows 4</from>
+      <to>Merge join 2</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Select values 2</from>
+      <to>Sort rows 5</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Sort rows 5</from>
+      <to>Merge join 3</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Merge join 3</from>
+      <to>Select values 3</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Select values 3</from>
+      <to>Write Rental in DWSakila</to>
+      <enabled>Y</enabled>
+    </hop>
   </order>
+  <step>
+    <name>Read Customer from Sakila</name>
+    <type>TableInput</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <connection>Sakila</connection>
+    <sql>SELECT
+  cus.customer_id
+, concat(cus.first_name, " ", cus.last_name) AS fullName
+, cus.email
+, ac.address
+, ac.address2
+, ac.district
+, ac.city
+, ac.postal_code
+FROM customer cus LEFT JOIN (
+SELECT 
+  a.address_id
+, a.address
+, a.address2
+, a.district
+, a.postal_code
+, c.city 
+FROM address a LEFT JOIN city c 
+ON c.city_id = a.city_id
+) ac 
+ON cus.address_id = ac.address_id</sql>
+    <limit>0</limit>
+    <lookup/>
+    <execute_each_row>N</execute_each_row>
+    <variables_active>N</variables_active>
+    <lazy_conversion_active>N</lazy_conversion_active>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>912</xloc>
+      <yloc>688</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
+  <step>
+    <name>Read Date from Sakila</name>
+    <type>TableInput</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <connection>Sakila</connection>
+    <sql>SELECT
+	YEAR(d.date) AS year
+,   MONTH(d.date) AS month
+,	DAY(d.date) AS day
+, 	WEEKDAY(d.date) as weekday
+,   QUARTER(d.date) as quarter
+FROM(
+SELECT
+   rental_date AS date
+FROM rental
+UNION
+SELECT
+   return_date AS date
+FROM rental
+UNION
+SELECT
+   payment_date AS date
+FROM payment
+) d;
+</sql>
+    <limit>0</limit>
+    <lookup/>
+    <execute_each_row>N</execute_each_row>
+    <variables_active>N</variables_active>
+    <lazy_conversion_active>N</lazy_conversion_active>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>64</xloc>
+      <yloc>80</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
+  <step>
+    <name>Read Rental from Sakila</name>
+    <type>TableInput</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <connection>Sakila</connection>
+    <sql>select 
+  r.rental_id
+, DAY(r.rental_date) AS rentalDay
+, MONTH(r.rental_date) AS rentalMonth
+, YEAR(r.rental_date) AS rentalYear
+, DAY(r.return_date) AS returnDay
+, MONTH(r.return_date) AS returnMonth
+, YEAR(r.return_date) AS returnYear
+, r.staff_id
+, r.customer_id
+, ifl.film_id
+, ifl.store_id
+, ifl.language_id
+, p.amount
+, DAY(p.payment_date) AS paymentDay
+, MONTH(p.payment_date) AS paymentMonth
+, YEAR(p.payment_date) AS paymentYear
+, DATEDIFF(r.return_date,r.rental_date) AS lenght
+from payment p, rental r LEFT JOIN (
+	select
+	  i.inventory_id
+	, i.store_id
+	, fl.film_id
+	, fl.language_id
+	from inventory i left join (
+		select
+		  f.film_id
+		, l.language_id 
+		from film f left join language l 
+		ON l.language_id = f.language_id) fl 
+	ON i.film_id = fl.film_id) ifl 
+ON r.inventory_id = ifl.inventory_id 
+WHERE r.rental_id = p.rental_id 
+and r.customer_id = p.customer_id 
+and r.staff_id = p.staff_id;</sql>
+    <limit>0</limit>
+    <lookup/>
+    <execute_each_row>N</execute_each_row>
+    <variables_active>N</variables_active>
+    <lazy_conversion_active>N</lazy_conversion_active>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>48</xloc>
+      <yloc>640</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
   <step>
     <name>Read Staff from Sakila</name>
     <type>TableInput</type>
     <description/>
-    <distribute>Y</distribute>
+    <distribute>N</distribute>
     <custom_distribution/>
     <copies>1</copies>
     <partitioning>
@@ -616,7 +870,7 @@
 FROM staff s LEFT JOIN store st 
 ON st.manager_staff_id = s.staff_id
 </sql>
-    <limit>10</limit>
+    <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>
     <variables_active>N</variables_active>
@@ -630,8 +884,8 @@ ON st.manager_staff_id = s.staff_id
       </output>
     </remotesteps>
     <GUI>
-      <xloc>144</xloc>
-      <yloc>384</yloc>
+      <xloc>592</xloc>
+      <yloc>304</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
@@ -665,7 +919,7 @@ SELECT
 FROM address a LEFT JOIN city c 
 ON c.city_id = a.city_id) ac 
 ON st.address_id = ac.address_id</sql>
-    <limit>10</limit>
+    <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>
     <variables_active>N</variables_active>
@@ -679,8 +933,8 @@ ON st.address_id = ac.address_id</sql>
       </output>
     </remotesteps>
     <GUI>
-      <xloc>128</xloc>
-      <yloc>560</yloc>
+      <xloc>1008</xloc>
+      <yloc>352</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
@@ -705,7 +959,7 @@ ON st.address_id = ac.address_id</sql>
 , rating
 , rental_rate
 FROM film</sql>
-    <limit>10</limit>
+    <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>
     <variables_active>N</variables_active>
@@ -719,8 +973,8 @@ FROM film</sql>
       </output>
     </remotesteps>
     <GUI>
-      <xloc>160</xloc>
-      <yloc>96</yloc>
+      <xloc>736</xloc>
+      <yloc>64</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
@@ -728,7 +982,7 @@ FROM film</sql>
     <name>Read language from Sakila</name>
     <type>TableInput</type>
     <description/>
-    <distribute>Y</distribute>
+    <distribute>N</distribute>
     <custom_distribution/>
     <copies>1</copies>
     <partitioning>
@@ -741,7 +995,7 @@ FROM film</sql>
 , name
 FROM language
 </sql>
-    <limit>10</limit>
+    <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>
     <variables_active>N</variables_active>
@@ -755,8 +1009,61 @@ FROM language
       </output>
     </remotesteps>
     <GUI>
-      <xloc>160</xloc>
-      <yloc>240</yloc>
+      <xloc>1024</xloc>
+      <yloc>256</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
+  <step>
+    <name>Select customer fields</name>
+    <type>SelectValues</type>
+    <description/>
+    <distribute>N</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <fields>
+      <field>
+        <name>customer_id</name>
+      </field>
+      <field>
+        <name>fullName</name>
+      </field>
+      <field>
+        <name>email</name>
+      </field>
+      <field>
+        <name>address</name>
+        <rename>addreess1</rename>
+      </field>
+      <field>
+        <name>address2</name>
+      </field>
+      <field>
+        <name>district</name>
+      </field>
+      <field>
+        <name>city</name>
+      </field>
+      <field>
+        <name>postal_code</name>
+      </field>
+      <select_unspecified>N</select_unspecified>
+    </fields>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>912</xloc>
+      <yloc>576</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
@@ -764,7 +1071,7 @@ FROM language
     <name>Select film fields</name>
     <type>SelectValues</type>
     <description/>
-    <distribute>Y</distribute>
+    <distribute>N</distribute>
     <custom_distribution/>
     <copies>1</copies>
     <partitioning>
@@ -806,8 +1113,8 @@ FROM language
       </output>
     </remotesteps>
     <GUI>
-      <xloc>480</xloc>
-      <yloc>96</yloc>
+      <xloc>736</xloc>
+      <yloc>224</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
@@ -815,7 +1122,7 @@ FROM language
     <name>Select store fields</name>
     <type>SelectValues</type>
     <description/>
-    <distribute>Y</distribute>
+    <distribute>N</distribute>
     <custom_distribution/>
     <copies>1</copies>
     <partitioning>
@@ -825,7 +1132,6 @@ FROM language
     <fields>
       <field>
         <name>store_id</name>
-        <rename/>
       </field>
       <field>
         <name>address</name>
@@ -833,19 +1139,15 @@ FROM language
       </field>
       <field>
         <name>address2</name>
-        <rename/>
       </field>
       <field>
         <name>district</name>
-        <rename/>
       </field>
       <field>
         <name>postal_code</name>
-        <rename/>
       </field>
       <field>
         <name>city</name>
-        <rename/>
       </field>
       <select_unspecified>N</select_unspecified>
     </fields>
@@ -858,13 +1160,71 @@ FROM language
       </output>
     </remotesteps>
     <GUI>
-      <xloc>544</xloc>
-      <yloc>560</yloc>
+      <xloc>1008</xloc>
+      <yloc>496</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
   <step>
-    <name>Write Language to DWSakila</name>
+    <name>Sort rows</name>
+    <type>SortRows</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <directory>%%java.io.tmpdir%%</directory>
+    <prefix>out</prefix>
+    <sort_size>1000000</sort_size>
+    <free_memory/>
+    <compress>N</compress>
+    <compress_variable/>
+    <unique_rows>Y</unique_rows>
+    <fields>
+      <field>
+        <name>day</name>
+        <ascending>Y</ascending>
+        <case_sensitive>Y</case_sensitive>
+        <collator_enabled>N</collator_enabled>
+        <collator_strength>0</collator_strength>
+        <presorted>N</presorted>
+      </field>
+      <field>
+        <name>month</name>
+        <ascending>Y</ascending>
+        <case_sensitive>N</case_sensitive>
+        <collator_enabled>N</collator_enabled>
+        <collator_strength>0</collator_strength>
+        <presorted>N</presorted>
+      </field>
+      <field>
+        <name>year</name>
+        <ascending>Y</ascending>
+        <case_sensitive>N</case_sensitive>
+        <collator_enabled>N</collator_enabled>
+        <collator_strength>0</collator_strength>
+        <presorted>N</presorted>
+      </field>
+    </fields>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>272</xloc>
+      <yloc>80</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
+  <step>
+    <name>Write date in DWSakila</name>
     <type>TableOutput</type>
     <description/>
     <distribute>Y</distribute>
@@ -876,7 +1236,7 @@ FROM language
     </partitioning>
     <connection>DWSakila</connection>
     <schema/>
-    <table>language</table>
+    <table>date</table>
     <commit>1000</commit>
     <truncate>N</truncate>
     <ignore_errors>N</ignore_errors>
@@ -892,209 +1252,117 @@ FROM language
     <return_keys>N</return_keys>
     <return_field/>
     <fields>
+      <field>
+        <column_name>year</column_name>
+        <stream_name>year</stream_name>
+      </field>
+      <field>
+        <column_name>month</column_name>
+        <stream_name>month</stream_name>
+      </field>
+      <field>
+        <column_name>day</column_name>
+        <stream_name>day</stream_name>
+      </field>
+      <field>
+        <column_name>weekday</column_name>
+        <stream_name>weekday</stream_name>
+      </field>
+      <field>
+        <column_name>quarter</column_name>
+        <stream_name>quarter</stream_name>
+      </field>
+      <field>
+        <column_name>date_id</column_name>
+        <stream_name>date_id</stream_name>
+      </field>
+    </fields>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>448</xloc>
+      <yloc>224</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
+  <step>
+    <name>Write Rental in DWSakila</name>
+    <type>TableOutput</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <connection>DWSakila</connection>
+    <schema/>
+    <table>rental</table>
+    <commit>1000</commit>
+    <truncate>N</truncate>
+    <ignore_errors>N</ignore_errors>
+    <use_batch>Y</use_batch>
+    <specify_fields>Y</specify_fields>
+    <partitioning_enabled>N</partitioning_enabled>
+    <partitioning_field/>
+    <partitioning_daily>N</partitioning_daily>
+    <partitioning_monthly>Y</partitioning_monthly>
+    <tablename_in_field>N</tablename_in_field>
+    <tablename_field/>
+    <tablename_in_table>Y</tablename_in_table>
+    <return_keys>N</return_keys>
+    <return_field/>
+    <fields>
+      <field>
+        <column_name>rental_id</column_name>
+        <stream_name>rental_id</stream_name>
+      </field>
       <field>
         <column_name>language_id</column_name>
         <stream_name>language_id</stream_name>
       </field>
       <field>
-        <column_name>name</column_name>
-        <stream_name>name</stream_name>
+        <column_name>film_id</column_name>
+        <stream_name>film_id</stream_name>
       </field>
-    </fields>
-    <attributes/>
-    <cluster_schema/>
-    <remotesteps>
-      <input>
-      </input>
-      <output>
-      </output>
-    </remotesteps>
-    <GUI>
-      <xloc>528</xloc>
-      <yloc>240</yloc>
-      <draw>Y</draw>
-    </GUI>
-  </step>
-  <step>
-    <name>Write Staff to DWSakila</name>
-    <type>TableOutput</type>
-    <description/>
-    <distribute>Y</distribute>
-    <custom_distribution/>
-    <copies>1</copies>
-    <partitioning>
-      <method>none</method>
-      <schema_name/>
-    </partitioning>
-    <connection>DWSakila</connection>
-    <schema/>
-    <table>staff</table>
-    <commit>1000</commit>
-    <truncate>N</truncate>
-    <ignore_errors>N</ignore_errors>
-    <use_batch>Y</use_batch>
-    <specify_fields>Y</specify_fields>
-    <partitioning_enabled>N</partitioning_enabled>
-    <partitioning_field/>
-    <partitioning_daily>N</partitioning_daily>
-    <partitioning_monthly>Y</partitioning_monthly>
-    <tablename_in_field>N</tablename_in_field>
-    <tablename_field/>
-    <tablename_in_table>Y</tablename_in_table>
-    <return_keys>N</return_keys>
-    <return_field/>
-    <fields>
-      <field>
-        <column_name>staff_id</column_name>
-        <stream_name>staff_id</stream_name>
-      </field>
-      <field>
-        <column_name>fullName</column_name>
-        <stream_name>fullName</stream_name>
-      </field>
-      <field>
-        <column_name>manager</column_name>
-        <stream_name>manager</stream_name>
-      </field>
-    </fields>
-    <attributes/>
-    <cluster_schema/>
-    <remotesteps>
-      <input>
-      </input>
-      <output>
-      </output>
-    </remotesteps>
-    <GUI>
-      <xloc>896</xloc>
-      <yloc>384</yloc>
-      <draw>Y</draw>
-    </GUI>
-  </step>
-  <step>
-    <name>Write Store to DWSakila</name>
-    <type>TableOutput</type>
-    <description/>
-    <distribute>Y</distribute>
-    <custom_distribution/>
-    <copies>1</copies>
-    <partitioning>
-      <method>none</method>
-      <schema_name/>
-    </partitioning>
-    <connection>DWSakila</connection>
-    <schema/>
-    <table>store</table>
-    <commit>1000</commit>
-    <truncate>N</truncate>
-    <ignore_errors>N</ignore_errors>
-    <use_batch>Y</use_batch>
-    <specify_fields>Y</specify_fields>
-    <partitioning_enabled>N</partitioning_enabled>
-    <partitioning_field/>
-    <partitioning_daily>N</partitioning_daily>
-    <partitioning_monthly>Y</partitioning_monthly>
-    <tablename_in_field>N</tablename_in_field>
-    <tablename_field/>
-    <tablename_in_table>Y</tablename_in_table>
-    <return_keys>N</return_keys>
-    <return_field/>
-    <fields>
       <field>
         <column_name>store_id</column_name>
         <stream_name>store_id</stream_name>
       </field>
       <field>
-        <column_name>address1</column_name>
-        <stream_name>address1</stream_name>
+        <column_name>staff_id</column_name>
+        <stream_name>staff_id</stream_name>
       </field>
       <field>
-        <column_name>address2</column_name>
-        <stream_name>address2</stream_name>
+        <column_name>customer_id</column_name>
+        <stream_name>customer_id</stream_name>
       </field>
       <field>
-        <column_name>district</column_name>
-        <stream_name>city</stream_name>
+        <column_name>dateRental</column_name>
+        <stream_name>rentalDate</stream_name>
       </field>
       <field>
-        <column_name>city</column_name>
-        <stream_name>district</stream_name>
+        <column_name>dateDevolution</column_name>
+        <stream_name>returnDate</stream_name>
       </field>
       <field>
-        <column_name>postal_code</column_name>
-        <stream_name>postal_code</stream_name>
-      </field>
-    </fields>
-    <attributes/>
-    <cluster_schema/>
-    <remotesteps>
-      <input>
-      </input>
-      <output>
-      </output>
-    </remotesteps>
-    <GUI>
-      <xloc>912</xloc>
-      <yloc>560</yloc>
-      <draw>Y</draw>
-    </GUI>
-  </step>
-  <step>
-    <name>Write film to DWSakila</name>
-    <type>TableOutput</type>
-    <description/>
-    <distribute>Y</distribute>
-    <custom_distribution/>
-    <copies>1</copies>
-    <partitioning>
-      <method>none</method>
-      <schema_name/>
-    </partitioning>
-    <connection>DWSakila</connection>
-    <schema/>
-    <table>film</table>
-    <commit>1000</commit>
-    <truncate>N</truncate>
-    <ignore_errors>N</ignore_errors>
-    <use_batch>Y</use_batch>
-    <specify_fields>Y</specify_fields>
-    <partitioning_enabled>N</partitioning_enabled>
-    <partitioning_field/>
-    <partitioning_daily>N</partitioning_daily>
-    <partitioning_monthly>Y</partitioning_monthly>
-    <tablename_in_field>N</tablename_in_field>
-    <tablename_field/>
-    <tablename_in_table>Y</tablename_in_table>
-    <return_keys>N</return_keys>
-    <return_field/>
-    <fields>
-      <field>
-        <column_name>film_id</column_name>
-        <stream_name>film_id</stream_name>
+        <column_name>datePayment</column_name>
+        <stream_name>paymentDate</stream_name>
       </field>
       <field>
-        <column_name>title</column_name>
-        <stream_name>title</stream_name>
-      </field>
-      <field>
-        <column_name>description</column_name>
-        <stream_name>description</stream_name>
-      </field>
-      <field>
-        <column_name>release_year</column_name>
-        <stream_name>release_date</stream_name>
+        <column_name>price</column_name>
+        <stream_name>amount</stream_name>
       </field>
       <field>
         <column_name>length</column_name>
-        <stream_name>length</stream_name>
-      </field>
-      <field>
-        <column_name>rating</column_name>
-        <stream_name>rating</stream_name>
-      </field>
-      <field>
-        <column_name>dailyPrice</column_name>
-        <stream_name>dailyPrice</stream_name>
+        <stream_name>lenght</stream_name>
       </field>
     </fields>
     <attributes/>
@@ -1106,14 +1374,14 @@ FROM language
       </output>
     </remotesteps>
     <GUI>
-      <xloc>896</xloc>
-      <yloc>96</yloc>
+      <xloc>784</xloc>
+      <yloc>480</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
   <step>
-    <name>Read Customer from Sakila</name>
-    <type>TableInput</type>
+    <name>Unique rows</name>
+    <type>Unique</type>
     <description/>
     <distribute>Y</distribute>
     <custom_distribution/>
@@ -1122,33 +1390,24 @@ FROM language
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <connection>Sakila</connection>
-    <sql>SELECT
-  cus.customer_id
-, concat(cus.first_name, " ", cus.last_name) AS fullName
-, cus.email
-, ac.address
-, ac.address2
-, ac.district
-, ac.city
-, ac.postal_code
-FROM customer cus LEFT JOIN (
-SELECT 
-  a.address_id
-, a.address
-, a.address2
-, a.district
-, a.postal_code
-, c.city 
-FROM address a LEFT JOIN city c 
-ON c.city_id = a.city_id
-) ac 
-ON cus.address_id = ac.address_id</sql>
-    <limit>10</limit>
-    <lookup/>
-    <execute_each_row>N</execute_each_row>
-    <variables_active>N</variables_active>
-    <lazy_conversion_active>N</lazy_conversion_active>
+    <count_rows>N</count_rows>
+    <count_field/>
+    <reject_duplicate_row>N</reject_duplicate_row>
+    <error_description/>
+    <fields>
+      <field>
+        <name>year</name>
+        <case_insensitive>Y</case_insensitive>
+      </field>
+      <field>
+        <name>month</name>
+        <case_insensitive>Y</case_insensitive>
+      </field>
+      <field>
+        <name>day</name>
+        <case_insensitive>Y</case_insensitive>
+      </field>
+    </fields>
     <attributes/>
     <cluster_schema/>
     <remotesteps>
@@ -1158,8 +1417,8 @@ ON cus.address_id = ac.address_id</sql>
       </output>
     </remotesteps>
     <GUI>
-      <xloc>112</xloc>
-      <yloc>704</yloc>
+      <xloc>432</xloc>
+      <yloc>80</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
@@ -1234,73 +1493,13 @@ ON cus.address_id = ac.address_id</sql>
       </output>
     </remotesteps>
     <GUI>
-      <xloc>912</xloc>
-      <yloc>704</yloc>
+      <xloc>1184</xloc>
+      <yloc>576</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
   <step>
-    <name>Select customer fields</name>
-    <type>SelectValues</type>
-    <description/>
-    <distribute>Y</distribute>
-    <custom_distribution/>
-    <copies>1</copies>
-    <partitioning>
-      <method>none</method>
-      <schema_name/>
-    </partitioning>
-    <fields>
-      <field>
-        <name>customer_id</name>
-        <rename/>
-      </field>
-      <field>
-        <name>fullName</name>
-        <rename/>
-      </field>
-      <field>
-        <name>email</name>
-        <rename/>
-      </field>
-      <field>
-        <name>address</name>
-        <rename>addreess1</rename>
-      </field>
-      <field>
-        <name>address2</name>
-        <rename/>
-      </field>
-      <field>
-        <name>district</name>
-        <rename/>
-      </field>
-      <field>
-        <name>city</name>
-        <rename/>
-      </field>
-      <field>
-        <name>postal_code</name>
-        <rename/>
-      </field>
-      <select_unspecified>N</select_unspecified>
-    </fields>
-    <attributes/>
-    <cluster_schema/>
-    <remotesteps>
-      <input>
-      </input>
-      <output>
-      </output>
-    </remotesteps>
-    <GUI>
-      <xloc>544</xloc>
-      <yloc>704</yloc>
-      <draw>Y</draw>
-    </GUI>
-  </step>
-  <step>
-    <name>Table output</name>
+    <name>Write Language to DWSakila</name>
     <type>TableOutput</type>
     <description/>
     <distribute>Y</distribute>
@@ -1312,7 +1511,7 @@ ON cus.address_id = ac.address_id</sql>
     </partitioning>
     <connection>DWSakila</connection>
     <schema/>
-    <table>date</table>
+    <table>language</table>
     <commit>1000</commit>
     <truncate>N</truncate>
     <ignore_errors>N</ignore_errors>
@@ -1328,177 +1527,209 @@ ON cus.address_id = ac.address_id</sql>
     <return_keys>N</return_keys>
     <return_field/>
     <fields>
-      <field>
-        <column_name>date_id</column_name>
-        <stream_name/>
-      </field>
-      <field>
-        <column_name>day</column_name>
-        <stream_name/>
-      </field>
-      <field>
-        <column_name>mouth</column_name>
-        <stream_name/>
-      </field>
-      <field>
-        <column_name>year</column_name>
-        <stream_name/>
-      </field>
-      <field>
-        <column_name>weekDay</column_name>
-        <stream_name/>
-      </field>
-      <field>
-        <column_name>quarter</column_name>
-        <stream_name/>
-      </field>
-    </fields>
-    <attributes/>
-    <cluster_schema/>
-    <remotesteps>
-      <input>
-      </input>
-      <output>
-      </output>
-    </remotesteps>
-    <GUI>
-      <xloc>1696</xloc>
-      <yloc>448</yloc>
-      <draw>Y</draw>
-    </GUI>
-  </step>
-  <step>
-    <name>Read Rental from Sakila</name>
-    <type>TableInput</type>
-    <description/>
-    <distribute>Y</distribute>
-    <custom_distribution/>
-    <copies>1</copies>
-    <partitioning>
-      <method>none</method>
-      <schema_name/>
-    </partitioning>
-    <connection>Sakila</connection>
-    <sql>select 
-  r.rental_id
-, r.rental_date
-, r.return_date
-, r.staff_id
-, r.customer_id
-, ifl.film_id
-, ifl.store_id
-, ifl.language_id
-, p.amount
-, p.payment_date
-, TIMESTAMPDIFF(DAY, r.rental_date, r.return_date) AS lenght
-from payment p, rental r LEFT JOIN (
-	select
-	  i.inventory_id
-	, i.store_id
-	, fl.film_id
-	, fl.language_id
-	from inventory i left join (
-		select
-		  f.film_id
-		, l.language_id 
-		from film f left join language l 
-		ON l.language_id = f.language_id) fl 
-	ON i.film_id = fl.film_id) ifl 
-ON r.inventory_id = ifl.inventory_id 
-WHERE r.rental_id = p.rental_id 
-and r.customer_id = p.customer_id 
-and r.staff_id = p.staff_id;</sql>
-    <limit>0</limit>
-    <lookup/>
-    <execute_each_row>N</execute_each_row>
-    <variables_active>N</variables_active>
-    <lazy_conversion_active>N</lazy_conversion_active>
-    <attributes/>
-    <cluster_schema/>
-    <remotesteps>
-      <input>
-      </input>
-      <output>
-      </output>
-    </remotesteps>
-    <GUI>
-      <xloc>1216</xloc>
-      <yloc>656</yloc>
-      <draw>Y</draw>
-    </GUI>
-  </step>
-  <step>
-    <name>Table output 2</name>
-    <type>TableOutput</type>
-    <description/>
-    <distribute>Y</distribute>
-    <custom_distribution/>
-    <copies>1</copies>
-    <partitioning>
-      <method>none</method>
-      <schema_name/>
-    </partitioning>
-    <connection>DWSakila</connection>
-    <schema/>
-    <table>rental</table>
-    <commit>1000</commit>
-    <truncate>N</truncate>
-    <ignore_errors>N</ignore_errors>
-    <use_batch>Y</use_batch>
-    <specify_fields>Y</specify_fields>
-    <partitioning_enabled>N</partitioning_enabled>
-    <partitioning_field/>
-    <partitioning_daily>N</partitioning_daily>
-    <partitioning_monthly>Y</partitioning_monthly>
-    <tablename_in_field>N</tablename_in_field>
-    <tablename_field/>
-    <tablename_in_table>Y</tablename_in_table>
-    <return_keys>N</return_keys>
-    <return_field/>
-    <fields>
-      <field>
-        <column_name>rental_id</column_name>
-        <stream_name/>
-      </field>
       <field>
         <column_name>language_id</column_name>
-        <stream_name/>
+        <stream_name>language_id</stream_name>
       </field>
       <field>
-        <column_name>film_id</column_name>
-        <stream_name/>
+        <column_name>name</column_name>
+        <stream_name>name</stream_name>
       </field>
-      <field>
-        <column_name>store_id</column_name>
-        <stream_name/>
-      </field>
+    </fields>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>1024</xloc>
+      <yloc>48</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
+  <step>
+    <name>Write Staff to DWSakila</name>
+    <type>TableOutput</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <connection>DWSakila</connection>
+    <schema/>
+    <table>staff</table>
+    <commit>1000</commit>
+    <truncate>N</truncate>
+    <ignore_errors>N</ignore_errors>
+    <use_batch>Y</use_batch>
+    <specify_fields>Y</specify_fields>
+    <partitioning_enabled>N</partitioning_enabled>
+    <partitioning_field/>
+    <partitioning_daily>N</partitioning_daily>
+    <partitioning_monthly>Y</partitioning_monthly>
+    <tablename_in_field>N</tablename_in_field>
+    <tablename_field/>
+    <tablename_in_table>Y</tablename_in_table>
+    <return_keys>N</return_keys>
+    <return_field/>
+    <fields>
       <field>
         <column_name>staff_id</column_name>
-        <stream_name/>
+        <stream_name>staff_id</stream_name>
       </field>
       <field>
-        <column_name>customer_id</column_name>
-        <stream_name/>
+        <column_name>fullName</column_name>
+        <stream_name>fullName</stream_name>
       </field>
       <field>
-        <column_name>dateRental</column_name>
-        <stream_name/>
+        <column_name>manager</column_name>
+        <stream_name>manager</stream_name>
+      </field>
+    </fields>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>592</xloc>
+      <yloc>64</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
+  <step>
+    <name>Write Store to DWSakila</name>
+    <type>TableOutput</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <connection>DWSakila</connection>
+    <schema/>
+    <table>store</table>
+    <commit>1000</commit>
+    <truncate>N</truncate>
+    <ignore_errors>N</ignore_errors>
+    <use_batch>Y</use_batch>
+    <specify_fields>Y</specify_fields>
+    <partitioning_enabled>N</partitioning_enabled>
+    <partitioning_field/>
+    <partitioning_daily>N</partitioning_daily>
+    <partitioning_monthly>Y</partitioning_monthly>
+    <tablename_in_field>N</tablename_in_field>
+    <tablename_field/>
+    <tablename_in_table>Y</tablename_in_table>
+    <return_keys>N</return_keys>
+    <return_field/>
+    <fields>
+      <field>
+        <column_name>store_id</column_name>
+        <stream_name>store_id</stream_name>
       </field>
       <field>
-        <column_name>dateDevolution</column_name>
-        <stream_name/>
+        <column_name>address1</column_name>
+        <stream_name>address1</stream_name>
       </field>
       <field>
-        <column_name>datePayment</column_name>
-        <stream_name/>
+        <column_name>address2</column_name>
+        <stream_name>address2</stream_name>
       </field>
       <field>
-        <column_name>price</column_name>
-        <stream_name/>
+        <column_name>district</column_name>
+        <stream_name>city</stream_name>
+      </field>
+      <field>
+        <column_name>city</column_name>
+        <stream_name>district</stream_name>
+      </field>
+      <field>
+        <column_name>postal_code</column_name>
+        <stream_name>postal_code</stream_name>
+      </field>
+    </fields>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>1200</xloc>
+      <yloc>496</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
+  <step>
+    <name>Write film to DWSakila</name>
+    <type>TableOutput</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <connection>DWSakila</connection>
+    <schema/>
+    <table>film</table>
+    <commit>1000</commit>
+    <truncate>N</truncate>
+    <ignore_errors>N</ignore_errors>
+    <use_batch>Y</use_batch>
+    <specify_fields>Y</specify_fields>
+    <partitioning_enabled>N</partitioning_enabled>
+    <partitioning_field/>
+    <partitioning_daily>N</partitioning_daily>
+    <partitioning_monthly>Y</partitioning_monthly>
+    <tablename_in_field>N</tablename_in_field>
+    <tablename_field/>
+    <tablename_in_table>Y</tablename_in_table>
+    <return_keys>N</return_keys>
+    <return_field/>
+    <fields>
+      <field>
+        <column_name>film_id</column_name>
+        <stream_name>film_id</stream_name>
+      </field>
+      <field>
+        <column_name>title</column_name>
+        <stream_name>title</stream_name>
+      </field>
+      <field>
+        <column_name>description</column_name>
+        <stream_name>description</stream_name>
+      </field>
+      <field>
+        <column_name>release_year</column_name>
+        <stream_name>release_date</stream_name>
       </field>
       <field>
         <column_name>length</column_name>
-        <stream_name/>
+        <stream_name>length</stream_name>
+      </field>
+      <field>
+        <column_name>rating</column_name>
+        <stream_name>rating</stream_name>
+      </field>
+      <field>
+        <column_name>dailyPrice</column_name>
+        <stream_name>dailyPrice</stream_name>
       </field>
     </fields>
     <attributes/>
@@ -1510,14 +1741,14 @@ and r.staff_id = p.staff_id;</sql>
       </output>
     </remotesteps>
     <GUI>
-      <xloc>1600</xloc>
-      <yloc>608</yloc>
+      <xloc>864</xloc>
+      <yloc>224</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
   <step>
-    <name>Read Date from Sakila</name>
-    <type>TableInput</type>
+    <name>Filter rows</name>
+    <type>FilterRows</type>
     <description/>
     <distribute>Y</distribute>
     <custom_distribution/>
@@ -1526,33 +1757,16 @@ and r.staff_id = p.staff_id;</sql>
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <connection>Sakila</connection>
-    <sql>SELECT
-	d.date
-,	YEAR(d.date) AS year
-,   MONTH(d.date) AS month
-,	DAY(d.date) AS day
-, 	WEEKDAY(d.date) as weekday
-,   QUARTER(d.date) as quarter
-FROM(
-SELECT
-   rental_date AS date
-FROM rental
-UNION
-SELECT
-   return_date AS date
-FROM rental
-UNION
-SELECT
-   payment_date AS date
-FROM payment
-) d;
-</sql>
-    <limit>0</limit>
-    <lookup/>
-    <execute_each_row>N</execute_each_row>
-    <variables_active>N</variables_active>
-    <lazy_conversion_active>N</lazy_conversion_active>
+    <send_true_to>Add sequence</send_true_to>
+    <send_false_to/>
+    <compare>
+      <condition>
+        <negated>N</negated>
+        <leftvalue>year</leftvalue>
+        <function>IS NOT NULL</function>
+        <rightvalue/>
+      </condition>
+    </compare>
     <attributes/>
     <cluster_schema/>
     <remotesteps>
@@ -1562,13 +1776,51 @@ FROM payment
       </output>
     </remotesteps>
     <GUI>
-      <xloc>1120</xloc>
-      <yloc>448</yloc>
+      <xloc>64</xloc>
+      <yloc>224</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
   <step>
-    <name>Sort rows</name>
+    <name>Merge join</name>
+    <type>MergeJoin</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <join_type>INNER</join_type>
+    <step1>Sort rows 3</step1>
+    <step2>Sort rows 2</step2>
+    <keys_1>
+      <key>day</key>
+      <key>month</key>
+      <key>year</key>
+    </keys_1>
+    <keys_2>
+      <key>rentalDay</key>
+      <key>rentalMonth</key>
+      <key>rentalYear</key>
+    </keys_2>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>80</xloc>
+      <yloc>512</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
+  <step>
+    <name>Sort rows 2</name>
     <type>SortRows</type>
     <description/>
     <distribute>Y</distribute>
@@ -1584,10 +1836,26 @@ FROM payment
     <free_memory/>
     <compress>N</compress>
     <compress_variable/>
-    <unique_rows>Y</unique_rows>
+    <unique_rows>N</unique_rows>
     <fields>
       <field>
-        <name>date</name>
+        <name>rentalDay</name>
+        <ascending>Y</ascending>
+        <case_sensitive>N</case_sensitive>
+        <collator_enabled>N</collator_enabled>
+        <collator_strength>0</collator_strength>
+        <presorted>N</presorted>
+      </field>
+      <field>
+        <name>rentalMonth</name>
+        <ascending>Y</ascending>
+        <case_sensitive>N</case_sensitive>
+        <collator_enabled>N</collator_enabled>
+        <collator_strength>0</collator_strength>
+        <presorted>N</presorted>
+      </field>
+      <field>
+        <name>rentalYear</name>
         <ascending>Y</ascending>
         <case_sensitive>N</case_sensitive>
         <collator_enabled>N</collator_enabled>
@@ -1604,38 +1872,53 @@ FROM payment
       </output>
     </remotesteps>
     <GUI>
-      <xloc>1344</xloc>
-      <yloc>448</yloc>
+      <xloc>256</xloc>
+      <yloc>640</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
   <step>
-    <name>Unique rows</name>
-    <type>Unique</type>
+    <name>Sort rows 3</name>
+    <type>SortRows</type>
     <description/>
-    <distribute>Y</distribute>
+    <distribute>N</distribute>
     <custom_distribution/>
     <copies>1</copies>
     <partitioning>
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <count_rows>N</count_rows>
-    <count_field/>
-    <reject_duplicate_row>N</reject_duplicate_row>
-    <error_description/>
+    <directory>%%java.io.tmpdir%%</directory>
+    <prefix>out</prefix>
+    <sort_size>1000000</sort_size>
+    <free_memory/>
+    <compress>N</compress>
+    <compress_variable/>
+    <unique_rows>N</unique_rows>
     <fields>
       <field>
-        <name>year</name>
-        <case_insensitive>Y</case_insensitive>
+        <name>day</name>
+        <ascending>Y</ascending>
+        <case_sensitive>N</case_sensitive>
+        <collator_enabled>N</collator_enabled>
+        <collator_strength>0</collator_strength>
+        <presorted>N</presorted>
       </field>
       <field>
         <name>month</name>
-        <case_insensitive>Y</case_insensitive>
+        <ascending>Y</ascending>
+        <case_sensitive>N</case_sensitive>
+        <collator_enabled>N</collator_enabled>
+        <collator_strength>0</collator_strength>
+        <presorted>N</presorted>
       </field>
       <field>
-        <name>day</name>
-        <case_insensitive>Y</case_insensitive>
+        <name>year</name>
+        <ascending>Y</ascending>
+        <case_sensitive>N</case_sensitive>
+        <collator_enabled>N</collator_enabled>
+        <collator_strength>0</collator_strength>
+        <presorted>N</presorted>
       </field>
     </fields>
     <attributes/>
@@ -1647,8 +1930,475 @@ FROM payment
       </output>
     </remotesteps>
     <GUI>
-      <xloc>1520</xloc>
-      <yloc>448</yloc>
+      <xloc>80</xloc>
+      <yloc>336</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
+  <step>
+    <name>Add sequence</name>
+    <type>Sequence</type>
+    <description/>
+    <distribute>N</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <valuename>date_id</valuename>
+    <use_database>N</use_database>
+    <connection>DWSakila</connection>
+    <schema/>
+    <seqname>SEQ_</seqname>
+    <use_counter>Y</use_counter>
+    <counter_name/>
+    <start_at>1</start_at>
+    <increment_by>1</increment_by>
+    <max_value>999999999</max_value>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>272</xloc>
+      <yloc>224</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
+  <step>
+    <name>Select values</name>
+    <type>SelectValues</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <fields>
+      <field>
+        <name>date_id</name>
+        <rename>rentalDate</rename>
+      </field>
+      <field>
+        <name>rental_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>returnDay</name>
+        <rename/>
+      </field>
+      <field>
+        <name>returnMonth</name>
+        <rename/>
+      </field>
+      <field>
+        <name>returnYear</name>
+        <rename/>
+      </field>
+      <field>
+        <name>staff_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>customer_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>film_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>store_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>language_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>amount</name>
+        <rename/>
+      </field>
+      <field>
+        <name>paymentDay</name>
+        <rename/>
+      </field>
+      <field>
+        <name>paymentMonth</name>
+        <rename/>
+      </field>
+      <field>
+        <name>paymentYear</name>
+        <rename/>
+      </field>
+      <field>
+        <name>lenght</name>
+        <rename/>
+      </field>
+      <select_unspecified>N</select_unspecified>
+    </fields>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>160</xloc>
+      <yloc>512</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
+  <step>
+    <name>Merge join 2</name>
+    <type>MergeJoin</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <join_type>INNER</join_type>
+    <step1>Sort rows 3</step1>
+    <step2>Sort rows 4</step2>
+    <keys_1>
+      <key>day</key>
+      <key>month</key>
+      <key>year</key>
+    </keys_1>
+    <keys_2>
+      <key>returnDay</key>
+      <key>returnMonth</key>
+      <key>returnYear</key>
+    </keys_2>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>384</xloc>
+      <yloc>512</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
+  <step>
+    <name>Select values 2</name>
+    <type>SelectValues</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <fields>
+      <field>
+        <name>date_id</name>
+        <rename>returnDate</rename>
+      </field>
+      <field>
+        <name>rentalDate</name>
+        <rename/>
+      </field>
+      <field>
+        <name>rental_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>staff_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>customer_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>film_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>store_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>language_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>amount</name>
+        <rename/>
+      </field>
+      <field>
+        <name>paymentDay</name>
+        <rename/>
+      </field>
+      <field>
+        <name>paymentMonth</name>
+        <rename/>
+      </field>
+      <field>
+        <name>paymentYear</name>
+        <rename/>
+      </field>
+      <field>
+        <name>lenght</name>
+        <rename/>
+      </field>
+      <select_unspecified>N</select_unspecified>
+    </fields>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>384</xloc>
+      <yloc>640</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
+  <step>
+    <name>Merge join 3</name>
+    <type>MergeJoin</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <join_type>INNER</join_type>
+    <step1>Sort rows 3</step1>
+    <step2>Sort rows 5</step2>
+    <keys_1>
+      <key>day</key>
+      <key>month</key>
+      <key>year</key>
+    </keys_1>
+    <keys_2>
+      <key>paymentDay</key>
+      <key>paymentMonth</key>
+      <key>paymentYear</key>
+    </keys_2>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>496</xloc>
+      <yloc>480</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
+  <step>
+    <name>Sort rows 4</name>
+    <type>SortRows</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <directory>%%java.io.tmpdir%%</directory>
+    <prefix>out</prefix>
+    <sort_size>1000000</sort_size>
+    <free_memory/>
+    <compress>N</compress>
+    <compress_variable/>
+    <unique_rows>N</unique_rows>
+    <fields>
+      <field>
+        <name>returnDay</name>
+        <ascending>Y</ascending>
+        <case_sensitive>N</case_sensitive>
+        <collator_enabled>N</collator_enabled>
+        <collator_strength>0</collator_strength>
+        <presorted>N</presorted>
+      </field>
+      <field>
+        <name>returnMonth</name>
+        <ascending>Y</ascending>
+        <case_sensitive>N</case_sensitive>
+        <collator_enabled>N</collator_enabled>
+        <collator_strength>0</collator_strength>
+        <presorted>N</presorted>
+      </field>
+      <field>
+        <name>returnYear</name>
+        <ascending>Y</ascending>
+        <case_sensitive>N</case_sensitive>
+        <collator_enabled>N</collator_enabled>
+        <collator_strength>0</collator_strength>
+        <presorted>N</presorted>
+      </field>
+    </fields>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>256</xloc>
+      <yloc>512</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
+  <step>
+    <name>Sort rows 5</name>
+    <type>SortRows</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <directory>%%java.io.tmpdir%%</directory>
+    <prefix>out</prefix>
+    <sort_size>1000000</sort_size>
+    <free_memory/>
+    <compress>N</compress>
+    <compress_variable/>
+    <unique_rows>N</unique_rows>
+    <fields>
+      <field>
+        <name>paymentDay</name>
+        <ascending>Y</ascending>
+        <case_sensitive>N</case_sensitive>
+        <collator_enabled>N</collator_enabled>
+        <collator_strength>0</collator_strength>
+        <presorted>N</presorted>
+      </field>
+      <field>
+        <name>paymentMonth</name>
+        <ascending>Y</ascending>
+        <case_sensitive>N</case_sensitive>
+        <collator_enabled>N</collator_enabled>
+        <collator_strength>0</collator_strength>
+        <presorted>N</presorted>
+      </field>
+      <field>
+        <name>paymentYear</name>
+        <ascending>Y</ascending>
+        <case_sensitive>N</case_sensitive>
+        <collator_enabled>N</collator_enabled>
+        <collator_strength>0</collator_strength>
+        <presorted>N</presorted>
+      </field>
+    </fields>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>496</xloc>
+      <yloc>640</yloc>
+      <draw>Y</draw>
+    </GUI>
+  </step>
+  <step>
+    <name>Select values 3</name>
+    <type>SelectValues</type>
+    <description/>
+    <distribute>N</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <fields>
+      <field>
+        <name>date_id</name>
+        <rename>paymentDate</rename>
+      </field>
+      <field>
+        <name>returnDate</name>
+        <rename/>
+      </field>
+      <field>
+        <name>rentalDate</name>
+        <rename/>
+      </field>
+      <field>
+        <name>rental_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>staff_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>customer_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>film_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>store_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>language_id</name>
+        <rename/>
+      </field>
+      <field>
+        <name>amount</name>
+        <rename/>
+      </field>
+      <field>
+        <name>lenght</name>
+        <rename/>
+      </field>
+      <select_unspecified>N</select_unspecified>
+    </fields>
+    <attributes/>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>624</xloc>
+      <yloc>480</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
